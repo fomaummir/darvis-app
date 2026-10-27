@@ -1,0 +1,8 @@
+{
+ "urls": [
+  "https://preview-chat-eb03d332-7c5d-4fcc-b120-a55a1b30c478.space-z.ai",
+  "https://preview-chat-821bab92-1494-426e-b836-25e295074b31.space-z.ai"
+ ],
+ "updated": "2026-10-27T04:16:40.921822Z",
+ "note": "лоадер Pages пробует по порядку, первый живой /api/health → редирект"
+}
