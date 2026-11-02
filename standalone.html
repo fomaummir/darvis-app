@@ -48,31 +48,51 @@
     d.textContent = t;
     urlsBox.appendChild(d);
   }
-  var urls = [];
-  try {
-    var r = await fetch("./ADDRESS.json?_=" + Date.now(), { cache: "no-store" });
-    if (r.ok) { var d = await r.json(); urls = (d.urls || []).filter(Boolean); }
-  } catch (e) {}
-  if (!urls.length) { st.textContent = "ADDRESS.json не найден — пробую лайт-версию"; acts.style.display = "block"; return; }
-  for (var i = 0; i < urls.length; i++) {
-    var u = urls[i].replace(/\/$/, "");
-    st.innerHTML = '<span class="spin"></span>проверяю ' + (i + 1) + " из " + urls.length + "…";
-    try {
-      var c = await fetch(u + "/api/health", { signal: AbortSignal.timeout(3500), cache: "no-store" });
-      if (c.ok) {
-        var j = null; try { j = await c.json(); } catch (e) {}
-        if (j && j.ok) {
-          log("✓ " + u, "ok");
-          st.textContent = "Сервер найден! Перехожу…";
-          location.replace(u);
-          return;
-        }
-      }
-      log("✗ " + u, "bad");
-    } catch (e) { log("✗ " + u, "bad"); }
+  // v6.9.2: свой таймаут вместо AbortSignal.timeout (появился только в
+  // Chrome 103 — на старых Android WebView лоадер падал и «ничего не включалось»)
+  function fetchTimeout(u, ms) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var to = setTimeout(function () { if (!done) { done = true; reject(new Error("timeout")); } }, ms);
+      fetch(u, { cache: "no-store" }).then(
+        function (r) { if (!done) { done = true; clearTimeout(to); resolve(r); } },
+        function (e) { if (!done) { done = true; clearTimeout(to); reject(e); } }
+      );
+    });
   }
-  st.textContent = "Живого сервера пока нет";
-  acts.style.display = "block";
+  async function probe() {
+    urlsBox.innerHTML = "";
+    acts.style.display = "none";
+    st.innerHTML = '<span class="spin"></span>проверяю список адресов';
+    var urls = [];
+    try {
+      var r = await fetch("./ADDRESS.json?_=" + Date.now(), { cache: "no-store" });
+      if (r.ok) { var d = await r.json(); urls = (d.urls || []).filter(Boolean); }
+    } catch (e) {}
+    if (!urls.length) { st.textContent = "ADDRESS.json не найден — пробую лайт-версию"; acts.style.display = "block"; return; }
+    for (var i = 0; i < urls.length; i++) {
+      var u = urls[i].replace(/\/$/, "");
+      st.innerHTML = '<span class="spin"></span>проверяю ' + (i + 1) + " из " + urls.length + "…";
+      try {
+        var c = await fetchTimeout(u + "/api/health", 3500);
+        if (c.ok) {
+          var j = null; try { j = await c.json(); } catch (e) {}
+          if (j && j.ok) {
+            log("✓ " + u, "ok");
+            st.textContent = "Сервер найден! Перехожу…";
+            location.replace(u);
+            return;
+          }
+        }
+        log("✗ " + u, "bad");
+      } catch (e) { log("✗ " + u, "bad"); }
+    }
+    // v6.9.2: не тупиковая страница — ищем сами каждые 10 с, пока сервер не поднимется
+    st.textContent = "Живого сервера пока нет — ищу сам каждые 10 секунд…";
+    acts.style.display = "block";
+    setTimeout(probe, 10000);
+  }
+  probe();
 })();
 </script>
 </body>
