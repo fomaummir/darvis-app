@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#0a0b0f">
-<title>Дарвис — поиск сервера…</title>
+<title>Дарвис — лайт-версия</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
@@ -13,87 +13,41 @@
   .logo { width: 56px; height: 56px; border-radius: 16px; background: #fbbf24; color: #000; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; margin-bottom: 12px; }
   h1 { font-size: 19px; margin-bottom: 6px; }
   p { color: #a1a1aa; font-size: 13px; }
-  .st { margin: 14px 0 4px; font-size: 13px; color: #fbbf24; min-height: 20px; }
-  .urls { margin: 10px 0 0; text-align: left; font-size: 11px; color: #71717a; max-height: 130px; overflow-y: auto; }
-  .urls div { padding: 3px 0; word-break: break-all; border-bottom: 1px dashed rgba(255,255,255,.06); }
-  .ok { color: #4ade80; } .bad { color: #f87171; }
-  .btn { display: inline-block; margin: 14px 6px 0; padding: 11px 18px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; text-decoration: none; }
+  .st { margin: 14px 0 4px; font-size: 13px; color: #fbbf24; }
+  ol { text-align: left; margin: 12px auto 0; max-width: 380px; color: #a1a1aa; font-size: 13px; padding-left: 20px; }
+  ol li { margin: 6px 0; }
+  .btn { display: inline-block; margin: 16px 6px 0; padding: 12px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; text-decoration: none; }
   .btn-a { background: #fbbf24; color: #000; }
   .btn-g { background: #1c1d23; color: #e4e4e7; border: 1px solid rgba(255,255,255,.12); }
-  .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fbbf24; border-top-color: transparent; border-radius: 50%; animation: s 1s linear infinite; vertical-align: -2px; margin-right: 6px; }
-  @keyframes s { to { transform: rotate(360deg); } }
+  .fam { margin-top: 14px; font-size: 11px; color: #52525b; }
+  .fam b { font-weight: 700; }
+  .clock { margin-top: 10px; font-size: 12px; color: #71717a; }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="logo">Д</div>
   <h1>Дарвис — ДОФА МИР</h1>
-  <p>Ищу живой сервер Дарвиса…</p>
-  <div class="st" id="st"><span class="spin"></span>проверяю список адресов</div>
-  <div class="urls" id="urls"></div>
-  <div id="acts" style="display:none">
-    <a class="btn btn-a" href="standalone.html">Лайт-версия (без сервера)</a>
-    <button class="btn btn-g" onclick="location.reload()">Искать снова</button>
-  </div>
-  <p style="margin-top:12px;font-size:11px;color:#52525b">Если сервер умер — открой новый чат Дарвиса, сервер переедет,<br>а этот лоадер найдёт его сам.</p>
+  <div class="st">Сервер сейчас недоступен — это не ваша вина</div>
+  <p>Лайт-версия работает всегда. Полная версия вернётся сама,<br>как только сервер снова засветится наружу.</p>
+  <div class="clock" id="clock"></div>
+  <ol>
+    <li>Подождите пару минут и нажмите «Искать сервер» — лоадер найдёт его сам.</li>
+    <li>Не нашёлся — откройте новый чат Дарвиса: сервер переедет, адрес обновится автоматически.</li>
+    <li>Интернет и VPN: раздел «VPN» в приложении (в том числе без своего сервера — WARP).</li>
+  </ol>
+  <a class="btn btn-a" href="index.html">Искать сервер</a>
+  <a class="btn btn-g" href="index.html" onclick="void(0)">Обновить страницу</a>
+  <div class="fam">Дарвис · <b style="color:#f472b6">Дафна</b> · <b style="color:#4ade80">Слэш</b> · <b style="color:#fbbf24">Даффи</b></div>
+  <p style="margin-top:10px;font-size:11px;color:#52525b">Страница сама вернётся к поиску сервера через 30 секунд.</p>
 </div>
 <script>
-(async function () {
-  var st = document.getElementById("st");
-  var urlsBox = document.getElementById("urls");
-  var acts = document.getElementById("acts");
-  function log(t, cls) {
-    var d = document.createElement("div");
-    d.className = cls || "";
-    d.textContent = t;
-    urlsBox.appendChild(d);
-  }
-  // v6.9.2: свой таймаут вместо AbortSignal.timeout (появился только в
-  // Chrome 103 — на старых Android WebView лоадер падал и «ничего не включалось»)
-  function fetchTimeout(u, ms) {
-    return new Promise(function (resolve, reject) {
-      var done = false;
-      var to = setTimeout(function () { if (!done) { done = true; reject(new Error("timeout")); } }, ms);
-      fetch(u, { cache: "no-store" }).then(
-        function (r) { if (!done) { done = true; clearTimeout(to); resolve(r); } },
-        function (e) { if (!done) { done = true; clearTimeout(to); reject(e); } }
-      );
-    });
-  }
-  async function probe() {
-    urlsBox.innerHTML = "";
-    acts.style.display = "none";
-    st.innerHTML = '<span class="spin"></span>проверяю список адресов';
-    var urls = [];
-    try {
-      var r = await fetch("./ADDRESS.json?_=" + Date.now(), { cache: "no-store" });
-      if (r.ok) { var d = await r.json(); urls = (d.urls || []).filter(Boolean); }
-    } catch (e) {}
-    if (!urls.length) { st.textContent = "ADDRESS.json не найден — пробую лайт-версию"; acts.style.display = "block"; return; }
-    for (var i = 0; i < urls.length; i++) {
-      var u = urls[i].replace(/\/$/, "");
-      st.innerHTML = '<span class="spin"></span>проверяю ' + (i + 1) + " из " + urls.length + "…";
-      try {
-        var c = await fetchTimeout(u + "/api/health", 3500);
-        if (c.ok) {
-          var j = null; try { j = await c.json(); } catch (e) {}
-          if (j && j.ok) {
-            log("✓ " + u, "ok");
-            st.textContent = "Сервер найден! Перехожу…";
-            location.replace(u);
-            return;
-          }
-        }
-        log("✗ " + u, "bad");
-      } catch (e) { log("✗ " + u, "bad"); }
-    }
-    // v6.9.2: не тупиковая страница — ищем сами каждые 10 с, пока сервер не поднимется
-    st.textContent = "Живого сервера пока нет — ищу сам каждые 10 секунд…";
-    acts.style.display = "block";
-    setTimeout(probe, 10000);
-  }
-  probe();
-})();
+  (function () {
+    var el = document.getElementById("clock");
+    function tick() { try { el.textContent = new Date().toLocaleString("ru-RU"); } catch (e) {} }
+    tick(); setInterval(tick, 1000);
+    setTimeout(function () { location.replace("index.html"); }, 30000);
+  })();
 </script>
 </body>
 </html>
