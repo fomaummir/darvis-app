@@ -2,6 +2,6 @@
  "urls": [
   "https://scientist-spider-discussed-minimize.trycloudflare.com"
  ],
- "updated": "2026-11-02T07:16:50.046060Z",
- "note": "лоадер Pages пробует по порядку, первый живой /api/health → редирект"
+ "updated": "2026-11-02T07:19:29.346Z",
+ "note": "авто-регистрация при открытии приложения"
 }
