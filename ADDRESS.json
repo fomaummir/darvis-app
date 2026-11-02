@@ -1,7 +1,8 @@
 {
  "urls": [
+  "https://scientist-spider-discussed-minimize.trycloudflare.com",
   "https://preview-chat-69b3e8c9-a5da-40e5-ba1c-0ae647924368.space-z.ai"
  ],
- "updated": "2026-11-02T04:29:44.216402Z",
- "note": "лоадер Pages пробует по порядку, первый живой /api/health → редирект"
+ "updated": "2026-11-02T07:16:48.897Z",
+ "note": "внешний туннель — обход шлюза платформы"
 }
